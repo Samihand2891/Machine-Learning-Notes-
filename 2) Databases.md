@@ -199,3 +199,68 @@ Define response class :
          orm_mode=True
 
 in Decorator -- `@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schema.Response)
+
+
+## SQL Relationships
+
+![[Pasted image 20260417174012.png]]
+Need to associate the users with there respective posts , by using relationships
+![[Pasted image 20260417174315.png]]
+One to many : A user can create many posts but a post can only relate to one user,
+`Specify : Table Users(id) as the foreign key
+
+Create a user_id , add constraints -- foreign key : ![[Pasted image 20260417175036.png|598]]
+Naming convention --> table_tabletorelate_fkey
+references : table to refer to
+referencing : what column
+
+- On actions : UPDATE -
+DELETE-
+tells us to set what action will be performed after deleting , updating the related foreign key
+`SELECT FROM * posts where user_id=18; // now we can just specify the foreign key to get the intended row
+
+In SQLAlchemy:
+models .py 
+class Post(Base) :
+`owner_id=Column(Integer , Foreign_Key("users.id" ,ondelete=CASCADE, onupdate= ))
+
+Get who created post back (updated schema) ,
+`class Post(PostBase) :
+`id : int
+`created_at : datetime
+`owner_id : int
+
+Getting owner id from authentication status ,
+`In models.Post(owner_id=current_user.id)
+`where current_user is specified by oauth2requestform
+
+How to only delete a post a person owns , 
+- First check the user logged in is the same user
+`if post.owner_id !=current_user.id :
+`raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, details="not authorized to perform the action")
+- IF you wish to delete the post belonging to different you will not be allowed
+
+Getting only posts that you own ,
+in `def get_posts():
+`post=db.query(models.Post).filter(model.Post.owner_id == current_user.id).all()
+`return post
+to not authorize
+`if post.owner_id !=current_user.id :
+`raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, details="not authorized to perform the action")
+
+Getting username about who created the post,
+`owner=Relationship("Users") // fetches user based information directly by understanding relationship of users
+`class Post(PostBase) :
+`id : int
+`created_at : datetime
+`owner_id : int
+`owner : UserOut //(Already defined class for giving user info)
+
+Query Parameters ,
+We can use query parameters in our url to optimize our search 
+- Query parameters in url are after `?limit=3
+- If you want to add more params use & , `?limit&skip`
+ example query params using sql alchemy
+ Change the def () and also the db.query()
+ ![[Pasted image 20260417223428.png]]
+>  limit , skip , search 
